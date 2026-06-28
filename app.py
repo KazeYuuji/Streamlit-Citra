@@ -448,8 +448,8 @@ try:
         st.markdown("<div class='card'><div class='card-title'>⬜ Konversi RGB → Grayscale</div>", unsafe_allow_html=True)
         st.markdown("Rumus: **Y = 0.299 R + 0.587 G + 0.114 B**")
         ca, cb = st.columns(2)
-        ca.image(imgrgb, caption="Original RGB", use_column_width=True)
-        cb.image(imggray, caption="Hasil Grayscale", use_column_width=True, clamp=True)
+        ca.image(imgrgb, caption="Original RGB", width='stretch')
+        cb.image(imggray, caption="Hasil Grayscale", width='stretch', clamp=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
         st.markdown("<div class='card'><div class='card-title'>🟦 Model Warna CMY</div>", unsafe_allow_html=True)
@@ -462,7 +462,7 @@ try:
         step = max(1, rh // 20, rw // 20)
         dm = imggray[::step, ::step]
         st.info(f"Sampling setiap {step} pixel ({dm.shape[0]}×{dm.shape[1]})")
-        st.dataframe(dm, use_container_width=True, height=300)
+        st.dataframe(dm, width='stretch', height=300)
         st.markdown("</div>", unsafe_allow_html=True)
 
     with t2:
@@ -472,9 +472,9 @@ try:
         if sf > 1:
             sr = downsample_image(imgrgb, sf)
             st.info(f"Resolusi: {worig}×{horig} → {sr.shape[1]}×{sr.shape[0]} px")
-            st.image(sr, caption=f"Sampling faktor {sf}", use_column_width=True)
+            st.image(sr, caption=f"Sampling faktor {sf}", width='stretch')
         else:
-            st.image(imgrgb, caption="Resolusi asli", use_column_width=True)
+            st.image(imgrgb, caption="Resolusi asli", width='stretch')
         st.markdown("</div>", unsafe_allow_html=True)
 
         st.markdown("<div class='card'>", unsafe_allow_html=True)
@@ -483,8 +483,8 @@ try:
         qi = quantize_image(imggray, qb)
         st.info(f"{qb} bit → {2**qb} level warna")
         ca, cb = st.columns(2)
-        ca.image(imggray, caption="Asli (8 bit, 256 level)", use_column_width=True, clamp=True)
-        cb.image(qi, caption=f"Kuantisasi ({qb} bit, {2**qb} level)", use_column_width=True, clamp=True)
+        ca.image(imggray, caption="Asli (8 bit, 256 level)", width='stretch', clamp=True)
+        cb.image(qi, caption=f"Kuantisasi ({qb} bit, {2**qb} level)", width='stretch', clamp=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
         st.markdown("<div class='card'>", unsafe_allow_html=True)
@@ -513,8 +513,8 @@ try:
         st.markdown("<div class='card'>", unsafe_allow_html=True)
         st.markdown("<div class='card-title'>⬜ 3.1 Konversi Grayscale</div>", unsafe_allow_html=True)
         ca, cb = st.columns(2)
-        ca.image(imgrgb, caption="Original RGB", use_column_width=True)
-        cb.image(imggray, caption="Grayscale", use_column_width=True, clamp=True)
+        ca.image(imgrgb, caption="Original RGB", width='stretch')
+        cb.image(imggray, caption="Grayscale", width='stretch', clamp=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
         st.markdown("<div class='card'>", unsafe_allow_html=True)
@@ -523,9 +523,9 @@ try:
         if ra != 0:
             M = cv2.getRotationMatrix2D((worig // 2, horig // 2), ra, 1.0)
             rot = cv2.warpAffine(imgrgb, M, (worig, horig), borderValue=(255, 255, 255))
-            st.image(rot, caption=f"Rotasi {ra}°", use_column_width=True)
+            st.image(rot, caption=f"Rotasi {ra}°", width='stretch')
         else:
-            st.image(imgrgb, caption="Rotasi 0° (asli)", use_column_width=True)
+            st.image(imgrgb, caption="Rotasi 0° (asli)", width='stretch')
         st.markdown("</div>", unsafe_allow_html=True)
 
         st.markdown("<div class='card'>", unsafe_allow_html=True)
@@ -533,9 +533,9 @@ try:
         fc = st.selectbox("Arah Flip", ["Tidak Ada", "Horizontal", "Vertikal", "Horizontal & Vertikal"])
         fm = {"Tidak Ada": None, "Horizontal": 1, "Vertikal": 0, "Horizontal & Vertikal": -1}
         if fm[fc] is not None:
-            st.image(cv2.flip(imgrgb, fm[fc]), caption=f"Flip {fc}", use_column_width=True)
+            st.image(cv2.flip(imgrgb, fm[fc]), caption=f"Flip {fc}", width='stretch')
         else:
-            st.image(imgrgb, caption="Asli (tanpa flip)", use_column_width=True)
+            st.image(imgrgb, caption="Asli (tanpa flip)", width='stretch')
         st.markdown("</div>", unsafe_allow_html=True)
 
         st.markdown("<div class='card'>", unsafe_allow_html=True)
@@ -550,7 +550,7 @@ try:
             x1, y1 = min(cx, worig - 1), min(cy, horig - 1)
             x2, y2 = min(x1 + cw, worig), min(y1 + ch, horig)
             if x2 > x1 and y2 > y1:
-                st.image(imgrgb[y1:y2, x1:x2], caption=f"Crop ({x1},{y1}) → ({x2},{y2})", use_column_width=True)
+                st.image(imgrgb[y1:y2, x1:x2], caption=f"Crop ({x1},{y1}) → ({x2},{y2})", width='stretch')
         else:
             st.info("Centang checkbox untuk mengaktifkan cropping")
         st.markdown("</div>", unsafe_allow_html=True)
@@ -564,24 +564,24 @@ try:
                 nw = int(worig * pct / 100)
                 nh = int(horig * pct / 100)
                 sc = cv2.resize(imgrgb, (nw, nh), interpolation=cv2.INTER_AREA if pct < 100 else cv2.INTER_LINEAR)
-                st.image(sc, caption=f"{pct}% → {nw}×{nh}", use_column_width=True)
+                st.image(sc, caption=f"{pct}% → {nw}×{nh}", width='stretch')
             else:
-                st.image(imgrgb, caption="100% (asli)", use_column_width=True)
+                st.image(imgrgb, caption="100% (asli)", width='stretch')
         else:
             ca, cb = st.columns(2)
             fw = ca.number_input("Lebar (px)", 1, 2000, worig)
             fh = cb.number_input("Tinggi (px)", 1, 2000, horig)
             if fw != worig or fh != horig:
-                st.image(cv2.resize(imgrgb, (fw, fh), interpolation=cv2.INTER_AREA), caption=f"{fw}×{fh}", use_column_width=True)
+                st.image(cv2.resize(imgrgb, (fw, fh), interpolation=cv2.INTER_AREA), caption=f"{fw}×{fh}", width='stretch')
             else:
-                st.image(imgrgb, caption="Ukuran asli", use_column_width=True)
+                st.image(imgrgb, caption="Ukuran asli", width='stretch')
         st.markdown("</div>", unsafe_allow_html=True)
 
         st.markdown("<div class='card'>", unsafe_allow_html=True)
         st.markdown("<div class='card-title'>🌓 3.6 Negasi (Invers Warna)</div>", unsafe_allow_html=True)
         ca, cb = st.columns(2)
-        ca.image(imgrgb, caption="Original", use_column_width=True)
-        cb.image(cv2.bitwise_not(imgrgb), caption="Negasi", use_column_width=True)
+        ca.image(imgrgb, caption="Original", width='stretch')
+        cb.image(cv2.bitwise_not(imgrgb), caption="Negasi", width='stretch')
         st.markdown("</div>", unsafe_allow_html=True)
 
     with t4:
@@ -596,9 +596,9 @@ try:
         if ed is not None:
             _, eb = cv2.threshold(ed, te, 255, cv2.THRESH_BINARY)
             ca, cb, cc = st.columns(3)
-            ca.image(imgrgb, caption="Original", use_column_width=True)
-            cb.image(ed, caption=f"{em} (gradien)", use_column_width=True, clamp=True)
-            cc.image(eb, caption=f"{em} (threshold={te})", use_column_width=True, clamp=True)
+            ca.image(imgrgb, caption="Original", width='stretch')
+            cb.image(ed, caption=f"{em} (gradien)", width='stretch', clamp=True)
+            cc.image(eb, caption=f"{em} (threshold={te})", width='stretch', clamp=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
         ei = {
@@ -631,13 +631,13 @@ try:
             st.markdown("<div class='card-title'>🌀 Preprocessing</div>", unsafe_allow_html=True)
             sb = st.slider("Kernel Gaussian Blur", 1, 21, 5, step=2)
             bg = cv2.GaussianBlur(imggray, (sb, sb), 0)
-            st.image(bg, caption=f"Gaussian Blur (kernel={sb})", use_column_width=True, clamp=True)
+            st.image(bg, caption=f"Gaussian Blur (kernel={sb})", width='stretch', clamp=True)
             st.markdown("</div>", unsafe_allow_html=True)
         with cb:
             st.markdown("<div class='card'>", unsafe_allow_html=True)
             st.markdown("<div class='card-title'>⚡ Otsu Thresholding</div>", unsafe_allow_html=True)
             _, ob = cv2.threshold(bg, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-            st.image(ob, caption="Otsu Threshold (otomatis)", use_column_width=True, clamp=True)
+            st.image(ob, caption="Otsu Threshold (otomatis)", width='stretch', clamp=True)
             st.markdown("</div>", unsafe_allow_html=True)
 
         st.markdown("<div class='card'>", unsafe_allow_html=True)
@@ -648,8 +648,8 @@ try:
         mi = cc.slider("Iterasi", 1, 10, 1)
         mr = apply_morphology(ob, mo, mk, mi)
         ca, cb = st.columns(2)
-        ca.image(ob, caption="Sebelum morfologi", use_column_width=True, clamp=True)
-        cb.image(mr, caption=f"Sesudah {mo} (kernel={mk}, iter={mi})", use_column_width=True, clamp=True)
+        ca.image(ob, caption="Sebelum morfologi", width='stretch', clamp=True)
+        cb.image(mr, caption=f"Sesudah {mo} (kernel={mk}, iter={mi})", width='stretch', clamp=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
         st.markdown("<div class='card'>", unsafe_allow_html=True)
@@ -662,8 +662,8 @@ try:
         ca_filt = imgrgb.copy()
         cv2.drawContours(ca_filt, filtered, -1, (0, 255, 0), 2)
         ca, cb = st.columns(2)
-        ca.image(ca_all, caption=f"Semua kontur ({len(contours)})", use_column_width=True)
-        cb.image(ca_filt, caption=f"Filtered (≥{ma} px) = {len(filtered)}", use_column_width=True)
+        ca.image(ca_all, caption=f"Semua kontur ({len(contours)})", width='stretch')
+        cb.image(ca_filt, caption=f"Filtered (≥{ma} px) = {len(filtered)}", width='stretch')
         st.markdown("</div>", unsafe_allow_html=True)
 
         if len(filtered) > 0:
@@ -694,8 +694,8 @@ try:
             st.markdown("<div class='card'>", unsafe_allow_html=True)
             st.markdown("<div class='card-title'>📌 Visualisasi Kontur & Convex Hull</div>", unsafe_allow_html=True)
             ca, cb = st.columns(2)
-            ca.image(ca_filt, caption=f"Kontur ({len(filtered)} objek)", use_column_width=True)
-            cb.image(hi, caption="Convex Hull", use_column_width=True)
+            ca.image(ca_filt, caption=f"Kontur ({len(filtered)} objek)", width='stretch')
+            cb.image(hi, caption="Convex Hull", width='stretch')
             st.markdown("</div>", unsafe_allow_html=True)
         else:
             st.warning("Tidak ada kontur terdeteksi. Sesuaikan parameter threshold, morfologi, atau min area.")
