@@ -5,6 +5,7 @@ from PIL import Image
 import matplotlib.pyplot as plt
 from io import BytesIO
 import base64
+import traceback
 
 st.set_page_config(
     page_title="Segmentasi Sampah Plastik Sungai",
@@ -17,13 +18,15 @@ st.set_page_config(
 # HELPER FUNCTIONS
 # ============================================================
 
-@st.cache_data
 def load_image(uploaded_file):
-    bytes_data = uploaded_file.getvalue()
-    pil_img = Image.open(BytesIO(bytes_data))
-    # Convert PIL to OpenCV (BGR)
-    opencv_img = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
-    return pil_img, opencv_img
+    try:
+        bytes_data = uploaded_file.getvalue()
+        pil_img = Image.open(BytesIO(bytes_data))
+        opencv_img = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
+        return pil_img, opencv_img
+    except Exception as e:
+        st.error(f"Gagal memuat gambar: {str(e)}")
+        st.stop()
 
 def pil_to_cv2(pil_img):
     return cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
@@ -153,7 +156,7 @@ def main():
             st.success(f"✔ **{uploaded_file.name}**")
             h, w = cv2_img_bgr.shape[:2]
             st.info(f"**Dimensi:** {w} x {h} px\n**Format:** {uploaded_file.type}")
-            st.image(cv2_img_rgb, caption="Citra Asli", use_column_width=True)
+            st.image(cv2_img_rgb, caption="Citra Asli", width="stretch")
 
             # Save to session state
             st.session_state["pil_img"] = pil_img
@@ -206,7 +209,7 @@ def main():
 
         with col1:
             st.subheader("Citra Asli (RGB)")
-            st.image(cv2_img_rgb, caption=f"Dimensi: {cv2_img_rgb.shape[1]} x {cv2_img_rgb.shape[0]} px", use_column_width=True)
+            st.image(cv2_img_rgb, caption=f"Dimensi: {cv2_img_rgb.shape[1]} x {cv2_img_rgb.shape[0]} px", width="stretch")
 
             # RGB Channel Visualization
             st.subheader("Kanal RGB")
@@ -233,7 +236,7 @@ def main():
 
         with col2:
             st.subheader("Citra Grayscale")
-            st.image(gray_img, caption="Konversi RGB → Grayscale", use_column_width=True, channels="GRAY")
+            st.image(gray_img, caption="Konversi RGB → Grayscale", width="stretch", channels="GRAY")
 
             # Grayscale Formula Info
             with st.expander("ℹ️ Rumus Konversi Grayscale"):
@@ -272,7 +275,7 @@ def main():
             new_w = int(cv2_img_rgb.shape[1] * scale_factor)
             new_h = int(cv2_img_rgb.shape[0] * scale_factor)
             sampled = cv2.resize(cv2_img_rgb, (new_w, new_h), interpolation=cv2.INTER_NEAREST)
-            st.image(sampled, caption=f"Sampling {scale_factor:.1f}x → {new_w}×{new_h} px", use_column_width=True)
+            st.image(sampled, caption=f"Sampling {scale_factor:.1f}x → {new_w}×{new_h} px", width="stretch")
             st.caption(f"Resolusi asli: {cv2_img_rgb.shape[1]}×{cv2_img_rgb.shape[0]} → {new_w}×{new_h}")
 
         with cols[1]:
@@ -281,7 +284,7 @@ def main():
             levels = 2 ** bit_depth
             scale_q = 255 / (levels - 1)
             quantized = (np.round(gray_img / scale_q) * scale_q).astype(np.uint8)
-            st.image(quantized, caption=f"Kuantisasi {bit_depth} bit ({levels} level)", use_column_width=True, channels="GRAY")
+            st.image(quantized, caption=f"Kuantisasi {bit_depth} bit ({levels} level)", width="stretch", channels="GRAY")
             st.caption(f"Level warna: {levels} (bit depth: {bit_depth})")
 
         st.markdown("---")
@@ -386,7 +389,7 @@ def main():
         with col_g1:
             if "Grayscale" in selected_ops:
                 st.subheader("Grayscale")
-                st.image(gray_img, caption="Hasil Konversi Grayscale", use_column_width=True, channels="GRAY")
+                st.image(gray_img, caption="Hasil Konversi Grayscale", width="stretch", channels="GRAY")
                 with st.expander("ℹ️ Penjelasan"):
                     st.markdown("Mengkonversi citra RGB ke grayscale menggunakan rumus: "
                                 "$Gray = 0.299R + 0.587G + 0.114B$")
@@ -398,7 +401,7 @@ def main():
                 center = (w // 2, h // 2)
                 M = cv2.getRotationMatrix2D(center, angle, 1.0)
                 rotated = cv2.warpAffine(cv2_img_rgb, M, (w, h), borderMode=cv2.BORDER_REPLICATE)
-                st.image(rotated, caption=f"Rotasi {angle}°", use_column_width=True)
+                st.image(rotated, caption=f"Rotasi {angle}°", width="stretch")
                 show_result = True
                 result_img = rotated
 
@@ -407,7 +410,7 @@ def main():
                 flip_dir = st.radio("Arah Flip:", ["Horizontal", "Vertikal", "Horizontal & Vertikal"], horizontal=True, key="flip_dir")
                 flip_code = {"Horizontal": 1, "Vertikal": 0, "Horizontal & Vertikal": -1}[flip_dir]
                 flipped = cv2.flip(cv2_img_rgb, flip_code)
-                st.image(flipped, caption=f"Flip {flip_dir}", use_column_width=True)
+                st.image(flipped, caption=f"Flip {flip_dir}", width="stretch")
                 show_result = True
                 result_img = flipped
 
@@ -421,7 +424,7 @@ def main():
                 y2 = st.number_input("Y akhir", 0, h - 1, h // 2, key="crop_y2")
                 if x1 < x2 and y1 < y2:
                     cropped = cv2_img_rgb[y1:y2, x1:x2].copy()
-                    st.image(cropped, caption=f"Crop ({x1},{y1}) - ({x2},{y2})", use_column_width=True)
+                    st.image(cropped, caption=f"Crop ({x1},{y1}) - ({x2},{y2})", width="stretch")
                     show_result = True
                     result_img = cropped
                 else:
@@ -440,7 +443,7 @@ def main():
                     "INTER_LANCZOS4": cv2.INTER_LANCZOS4,
                 }
                 scaled = cv2.resize(cv2_img_rgb, (new_w, new_h), interpolation=interp_map[interp])
-                st.image(scaled, caption=f"Resize {scale_pct}% → {new_w}×{new_h}", use_column_width=True)
+                st.image(scaled, caption=f"Resize {scale_pct}% → {new_w}×{new_h}", width="stretch")
                 st.caption(f"Dimensi asli: {w}×{h} → Dimensi baru: {new_w}×{new_h}")
                 show_result = True
                 result_img = scaled
@@ -448,7 +451,7 @@ def main():
             if "Negasi" in selected_ops:
                 st.subheader("Negasi (Invers Warna)")
                 negated = 255 - cv2_img_rgb
-                st.image(negated, caption="Negasi Citra", use_column_width=True)
+                st.image(negated, caption="Negasi Citra", width="stretch")
                 show_result = True
                 result_img = negated
 
@@ -457,7 +460,7 @@ def main():
             col_preview = st.columns([1, 2, 1])
             with col_preview[1]:
                 st.caption("Preview hasil operasi terakhir")
-                st.image(result_img, use_column_width=True)
+                st.image(result_img, width="stretch")
 
     # ========================================================
     # TAB 4: DETEKSI TEPI
@@ -483,8 +486,8 @@ def main():
                 sobel_res = apply_sobel(gray_img)
                 _, sobel_th = cv2.threshold(sobel_res, thresh_edge, 255, cv2.THRESH_BINARY)
                 edge_results["Sobel"] = (sobel_res, sobel_th)
-                st.image(sobel_res, caption="Sobel Gradient", use_column_width=True, channels="GRAY")
-                st.image(sobel_th, caption=f"Sobel Threshold {thresh_edge}", use_column_width=True, channels="GRAY")
+                st.image(sobel_res, caption="Sobel Gradient", width="stretch", channels="GRAY")
+                st.image(sobel_th, caption=f"Sobel Threshold {thresh_edge}", width="stretch", channels="GRAY")
 
         if "Prewitt" in edge_methods:
             with cols_edge[1]:
@@ -492,8 +495,8 @@ def main():
                 prewitt_res = apply_prewitt(gray_img)
                 _, prewitt_th = cv2.threshold(prewitt_res, thresh_edge, 255, cv2.THRESH_BINARY)
                 edge_results["Prewitt"] = (prewitt_res, prewitt_th)
-                st.image(prewitt_res, caption="Prewitt Gradient", use_column_width=True, channels="GRAY")
-                st.image(prewitt_th, caption=f"Prewitt Threshold {thresh_edge}", use_column_width=True, channels="GRAY")
+                st.image(prewitt_res, caption="Prewitt Gradient", width="stretch", channels="GRAY")
+                st.image(prewitt_th, caption=f"Prewitt Threshold {thresh_edge}", width="stretch", channels="GRAY")
 
         if "Robert Cross" in edge_methods:
             with cols_edge[2]:
@@ -501,8 +504,8 @@ def main():
                 robert_res = apply_robert(gray_img)
                 _, robert_th = cv2.threshold(robert_res, thresh_edge, 255, cv2.THRESH_BINARY)
                 edge_results["Robert Cross"] = (robert_res, robert_th)
-                st.image(robert_res, caption="Robert Gradient", use_column_width=True, channels="GRAY")
-                st.image(robert_th, caption=f"Robert Threshold {thresh_edge}", use_column_width=True, channels="GRAY")
+                st.image(robert_res, caption="Robert Gradient", width="stretch", channels="GRAY")
+                st.image(robert_th, caption=f"Robert Threshold {thresh_edge}", width="stretch", channels="GRAY")
 
         if "Laplacian" in edge_methods:
             with cols_edge[3]:
@@ -510,8 +513,8 @@ def main():
                 lap_res = apply_laplacian(gray_img)
                 _, lap_th = cv2.threshold(lap_res, thresh_edge, 255, cv2.THRESH_BINARY)
                 edge_results["Laplacian"] = (lap_res, lap_th)
-                st.image(lap_res, caption="Laplacian", use_column_width=True, channels="GRAY")
-                st.image(lap_th, caption=f"Laplacian Threshold {thresh_edge}", use_column_width=True, channels="GRAY")
+                st.image(lap_res, caption="Laplacian", width="stretch", channels="GRAY")
+                st.image(lap_th, caption=f"Laplacian Threshold {thresh_edge}", width="stretch", channels="GRAY")
 
         if edge_results:
             st.markdown("---")
@@ -524,7 +527,7 @@ def main():
                     res_img, th_img = edge_results[name]
                     # Combined view
                     combined = np.hstack([res_img, th_img])
-                    st.image(combined, caption=f"{name}: Gradient | Threshold", use_column_width=True, channels="GRAY")
+                    st.image(combined, caption=f"{name}: Gradient | Threshold", width="stretch", channels="GRAY")
 
     # ========================================================
     # TAB 5: SEGMENTASI & VOLUME
@@ -546,14 +549,14 @@ def main():
 
         with col_seg1:
             st.subheader("1. Otsu Thresholding")
-            st.image(gray_img, caption="Citra Grayscale Input", use_column_width=True, channels="GRAY")
+            st.image(gray_img, caption="Citra Grayscale Input", width="stretch", channels="GRAY")
 
             # Show Otsu threshold value
             _, otsu_test = cv2.threshold(gray_img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
             otsu_val = cv2.threshold(gray_img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[0]
             st.success(f"Nilai threshold Otsu otomatis: **{otsu_val:.1f}**")
 
-            st.image(otsu_test, caption=f"Otsu Threshold (T={otsu_val:.0f})", use_column_width=True, channels="GRAY")
+            st.image(otsu_test, caption=f"Otsu Threshold (T={otsu_val:.0f})", width="stretch", channels="GRAY")
 
             with st.expander("ℹ️ Tentang Otsu Thresholding"):
                 st.markdown("""
@@ -582,8 +585,8 @@ def main():
                 kernel_size=kernel_size, iterations=morph_iter
             )
 
-            st.image(binary_otsu, caption="Otsu Binary", use_column_width=True, channels="GRAY")
-            st.image(morph_result, caption=f"Otsu + {morph_op.capitalize()}", use_column_width=True, channels="GRAY")
+            st.image(binary_otsu, caption="Otsu Binary", width="stretch", channels="GRAY")
+            st.image(morph_result, caption=f"Otsu + {morph_op.capitalize()}", width="stretch", channels="GRAY")
 
         st.markdown("---")
 
@@ -603,7 +606,7 @@ def main():
         col_over1, col_over2 = st.columns(2)
 
         with col_over1:
-            st.image(overlay_pil, caption="Overlay Segmentasi pada Citra Asli", use_column_width=True)
+            st.image(overlay_pil, caption="Overlay Segmentasi pada Citra Asli", width="stretch")
 
         with col_over2:
             st.subheader("Hasil Perhitungan Volume")
