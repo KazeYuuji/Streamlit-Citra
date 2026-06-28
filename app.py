@@ -426,350 +426,355 @@ tab1_label, tab2_label, tab3_label, tab4_label, tab5_label = st.tabs([
     "🖼️ Representasi", "💻 Digitalisasi", "🔧 Geometri", "✏️ Deteksi Tepi", "🎯 Segmentasi & Volume"
 ])
 
+err = st.container()
+
 # ===== TAB 1: REPRESENTASI =====
 with tab1_label:
-    st.markdown("<div class='card'><div class='card-title'>📊 Informasi Citra</div>", unsafe_allow_html=True)
-    cols = st.columns(4)
-    cols[0].metric("Dimensi", f"{w_orig} × {h_orig}")
-    cols[1].metric("Total Pixel", f"{w_orig * h_orig:,}")
-    cols[2].metric("Channel", "3 (RGB)")
-    cols[3].metric("Tipe Data", "uint8 (0–255)")
-    st.markdown("</div>", unsafe_allow_html=True)
+    try:
+        st.markdown("<div class='card'><div class='card-title'>📊 Informasi Citra</div>", unsafe_allow_html=True)
+        cols = st.columns(4)
+        cols[0].metric("Dimensi", f"{w_orig} × {h_orig}")
+        cols[1].metric("Total Pixel", f"{w_orig * h_orig:,}")
+        cols[2].metric("Channel", "3 (RGB)")
+        cols[3].metric("Tipe Data", "uint8 (0–255)")
+        st.markdown("</div>", unsafe_allow_html=True)
 
-    st.markdown("<div class='card'><div class='card-title'>🎨 Channel RGB</div>", unsafe_allow_html=True)
-    st.pyplot(show_rgb_channels(img_rgb))
-    plt.close()
-    with st.expander("ℹ️ Tentang Model Warna RGB"):
-        st.markdown("""
-        **RGB (Red, Green, Blue)** adalah model warna aditif. Setiap pixel memiliki 3 channel 
-        dengan nilai 0–255 (8 bit), total 16,7 juta warna. Citra digital disimpan sebagai 
-        matriks 3D: (tinggi × lebar × 3).
-        """)
-    st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("<div class='card'><div class='card-title'>🎨 Channel RGB</div>", unsafe_allow_html=True)
+        st.pyplot(show_rgb_channels(img_rgb))
+        st.markdown("</div>", unsafe_allow_html=True)
 
-    st.markdown("<div class='card'><div class='card-title'>⬜ Konversi RGB → Grayscale</div>", unsafe_allow_html=True)
-    st.markdown("Rumus: **Y = 0.299 R + 0.587 G + 0.114 B**", unsafe_allow_html=True)
-    col1, col2 = st.columns(2)
-    col1.image(img_rgb, caption="Original RGB", use_column_width=True)
-    col2.image(img_gray, caption="Hasil Grayscale", use_column_width=True, clamp=True)
-    st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("<div class='card'><div class='card-title'>⬜ Konversi RGB → Grayscale</div>", unsafe_allow_html=True)
+        st.markdown("Rumus: **Y = 0.299 R + 0.587 G + 0.114 B**", unsafe_allow_html=True)
+        col1, col2 = st.columns(2)
+        col1.image(img_rgb, caption="Original RGB", use_column_width=True)
+        col2.image(img_gray, caption="Hasil Grayscale", use_column_width=True, clamp=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
-    st.markdown("<div class='card'><div class='card-title'>🟦 Model Warna CMY</div>", unsafe_allow_html=True)
-    st.markdown("Rumus: **C = 1 − R, M = 1 − G, Y = 1 − B** (0–1)", unsafe_allow_html=True)
-    st.pyplot(show_cmy_channels(img_rgb))
-    plt.close()
-    st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("<div class='card'><div class='card-title'>🟦 Model Warna CMY</div>", unsafe_allow_html=True)
+        st.markdown("Rumus: **C = 1 − R, M = 1 − G, Y = 1 − B** (0–1)", unsafe_allow_html=True)
+        st.pyplot(show_cmy_channels(img_rgb))
+        st.markdown("</div>", unsafe_allow_html=True)
 
-    st.markdown("<div class='card'><div class='card-title'>🔢 Matriks Pixel</div>", unsafe_allow_html=True)
-    show_full = st.checkbox("Tampilkan resolusi penuh", value=False)
-    rh, rw = img_gray.shape
-    if not show_full and (rh > 20 or rw > 20):
+        st.markdown("<div class='card'><div class='card-title'>🔢 Matriks Pixel</div>", unsafe_allow_html=True)
+        rh, rw = img_gray.shape
         step = max(1, rh // 20, rw // 20)
         display_matrix = img_gray[::step, ::step]
-        st.info(f"Sampling setiap {step} pixel untuk performa ({display_matrix.shape[0]}×{display_matrix.shape[1]})")
-    else:
-        display_matrix = img_gray
-    st.dataframe(display_matrix, use_container_width=True, height=300)
-    st.markdown("</div>", unsafe_allow_html=True)
+        st.info(f"Sampling setiap {step} pixel ({display_matrix.shape[0]}×{display_matrix.shape[1]})")
+        st.dataframe(display_matrix, use_container_width=True, height=300)
+        st.markdown("</div>", unsafe_allow_html=True)
+    except Exception as e:
+        import traceback
+        err.error(f"Tab 1 Error: {e}")
+        err.code(traceback.format_exc())
 
 # ===== TAB 2: DIGITALISASI =====
 with tab2_label:
-    st.markdown("<div class='card'>", unsafe_allow_html=True)
-    st.markdown("<div class='card-title'>📐 Sampling – Resolusi Gambar</div>", unsafe_allow_html=True)
-    samp_factor = st.slider("Faktor Downsampling", 1, 10, 1, help="1 = resolusi asli, makin besar makin rendah")
-    if samp_factor > 1:
-        sampled_rgb = downsample_image(img_rgb, samp_factor)
-        st.info(f"Resolusi: {w_orig}×{h_orig} → {sampled_rgb.shape[1]}×{sampled_rgb.shape[0]} px")
-        st.image(sampled_rgb, caption=f"Sampling faktor {samp_factor}", use_column_width=True)
-    else:
-        st.image(img_rgb, caption="Resolusi asli", use_column_width=True)
-    st.markdown("</div>", unsafe_allow_html=True)
+    try:
+        st.markdown("<div class='card'>", unsafe_allow_html=True)
+        st.markdown("<div class='card-title'>📐 Sampling – Resolusi Gambar</div>", unsafe_allow_html=True)
+        samp_factor = st.slider("Faktor Downsampling", 1, 10, 1, help="1 = resolusi asli, makin besar makin rendah")
+        if samp_factor > 1:
+            sampled_rgb = downsample_image(img_rgb, samp_factor)
+            st.info(f"Resolusi: {w_orig}×{h_orig} → {sampled_rgb.shape[1]}×{sampled_rgb.shape[0]} px")
+            st.image(sampled_rgb, caption=f"Sampling faktor {samp_factor}", use_column_width=True)
+        else:
+            st.image(img_rgb, caption="Resolusi asli", use_column_width=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
-    st.markdown("<div class='card'>", unsafe_allow_html=True)
-    st.markdown("<div class='card-title'>🎨 Kuantisasi – Level Warna</div>", unsafe_allow_html=True)
-    q_bits = st.slider("Bit per pixel", 1, 8, 8, help="8 bit = 256 level, 1 bit = 2 level (biner)")
-    q_img = quantize_image(img_gray, q_bits)
-    st.info(f"{q_bits} bit → {2**q_bits} level warna")
-    col1, col2 = st.columns(2)
-    col1.image(img_gray, caption=f"Asli (8 bit, 256 level)", use_column_width=True, clamp=True)
-    col2.image(q_img, caption=f"Kuantisasi ({q_bits} bit, {2**q_bits} level)", use_column_width=True, clamp=True)
-    st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("<div class='card'>", unsafe_allow_html=True)
+        st.markdown("<div class='card-title'>🎨 Kuantisasi – Level Warna</div>", unsafe_allow_html=True)
+        q_bits = st.slider("Bit per pixel", 1, 8, 8, help="8 bit = 256 level, 1 bit = 2 level (biner)")
+        q_img = quantize_image(img_gray, q_bits)
+        st.info(f"{q_bits} bit → {2**q_bits} level warna")
+        col1, col2 = st.columns(2)
+        col1.image(img_gray, caption=f"Asli (8 bit, 256 level)", use_column_width=True, clamp=True)
+        col2.image(q_img, caption=f"Kuantisasi ({q_bits} bit, {2**q_bits} level)", use_column_width=True, clamp=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
-    st.markdown("<div class='card'>", unsafe_allow_html=True)
-    st.markdown("<div class='card-title'>💾 Format Citra</div>", unsafe_allow_html=True)
-    cols = st.columns(3)
-    cols[0].info("**JPG/JPEG**\n\nKompresi lossy\nUkuran kecil\nCocok untuk foto")
-    cols[1].info("**PNG**\n\nKompresi lossless\nTransparansi\nKualitas tinggi")
-    cols[2].info("**BMP**\n\nTanpa kompresi\nUkuran besar\nKualitas sempurna")
-    st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("<div class='card'>", unsafe_allow_html=True)
+        st.markdown("<div class='card-title'>💾 Format Citra</div>", unsafe_allow_html=True)
+        cols = st.columns(3)
+        cols[0].info("**JPG/JPEG**\n\nKompresi lossy\nUkuran kecil\nCocok untuk foto")
+        cols[1].info("**PNG**\n\nKompresi lossless\nTransparansi\nKualitas tinggi")
+        cols[2].info("**BMP**\n\nTanpa kompresi\nUkuran besar\nKualitas sempurna")
+        st.markdown("</div>", unsafe_allow_html=True)
 
-    st.markdown("<div class='card'>", unsafe_allow_html=True)
-    st.markdown("<div class='card-title'>🔗 Hubungan Antar Pixel (Neighbourhood)</div>", unsafe_allow_html=True)
-    neigh_mode = st.radio("Mode", ["4-Neighbour", "8-Neighbour"], horizontal=True)
-    st.markdown(f"""
-    **{neigh_mode}:** {('N₄(p) = pixel di atas, bawah, kiri, kanan' if neigh_mode == '4-Neighbour' else 'N₈(p) = seluruh pixel tetangga termasuk diagonal')}
-    """)
-    fig_n, ax_n = plt.subplots(figsize=(6, 5))
-    fig_n.patch.set_facecolor('white')
-    ax_n.imshow(img_gray, cmap='gray')
-    ax_n.set_title("Klik pada pixel: perhatikan koordinat X (kolom), Y (baris)", fontsize=9)
-    ax_n.set_xlabel("X")
-    ax_n.set_ylabel("Y")
-    ax_n.grid(True, alpha=0.3)
-    st.pyplot(fig_n)
-    plt.close()
-    st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("<div class='card'>", unsafe_allow_html=True)
+        st.markdown("<div class='card-title'>🔗 Hubungan Antar Pixel (Neighbourhood)</div>", unsafe_allow_html=True)
+        neigh_mode = st.radio("Mode", ["4-Neighbour", "8-Neighbour"], horizontal=True)
+        st.markdown(f"""
+        **{neigh_mode}:** {('N₄(p) = pixel di atas, bawah, kiri, kanan' if neigh_mode == '4-Neighbour' else 'N₈(p) = seluruh pixel tetangga termasuk diagonal')}
+        """)
+        fig_n, ax_n = plt.subplots(figsize=(6, 5))
+        fig_n.patch.set_facecolor('white')
+        ax_n.imshow(img_gray, cmap='gray')
+        ax_n.set_title("Klik pada pixel: perhatikan koordinat X (kolom), Y (baris)", fontsize=9)
+        ax_n.set_xlabel("X")
+        ax_n.set_ylabel("Y")
+        ax_n.grid(True, alpha=0.3)
+        st.pyplot(fig_n)
+        st.markdown("</div>", unsafe_allow_html=True)
+    except Exception as e:
+        import traceback
+        err.error(f"Tab 2 Error: {e}")
+        err.code(traceback.format_exc())
 
 # ===== TAB 3: GEOMETRI =====
 with tab3_label:
-    st.markdown("<div class='card'>", unsafe_allow_html=True)
-    st.markdown("<div class='card-title'>⬜ 3.1 Konversi Grayscale</div>", unsafe_allow_html=True)
-    col1, col2 = st.columns(2)
-    col1.image(img_rgb, caption="Original RGB", use_column_width=True)
-    col2.image(img_gray, caption="Grayscale", use_column_width=True, clamp=True)
-    st.markdown("</div>", unsafe_allow_html=True)
+    try:
+        st.markdown("<div class='card'>", unsafe_allow_html=True)
+        st.markdown("<div class='card-title'>⬜ 3.1 Konversi Grayscale</div>", unsafe_allow_html=True)
+        col1, col2 = st.columns(2)
+        col1.image(img_rgb, caption="Original RGB", use_column_width=True)
+        col2.image(img_gray, caption="Grayscale", use_column_width=True, clamp=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
-    st.markdown("<div class='card'>", unsafe_allow_html=True)
-    st.markdown("<div class='card-title'>🔄 3.2 Rotasi</div>", unsafe_allow_html=True)
-    rot_angle = st.slider("Sudut rotasi (°)", -180, 180, 0)
-    if rot_angle != 0:
-        center = (w_orig // 2, h_orig // 2)
-        M = cv2.getRotationMatrix2D(center, rot_angle, 1.0)
-        rotated = cv2.warpAffine(img_rgb, M, (w_orig, h_orig), borderValue=(255, 255, 255))
-        st.image(rotated, caption=f"Rotasi {rot_angle}°", use_column_width=True)
-    else:
-        st.image(img_rgb, caption="Rotasi 0° (asli)", use_column_width=True)
-    st.markdown("</div>", unsafe_allow_html=True)
-
-    st.markdown("<div class='card'>", unsafe_allow_html=True)
-    st.markdown("<div class='card-title'>🪞 3.3 Flipping</div>", unsafe_allow_html=True)
-    flip_choice = st.selectbox("Arah Flip", ["Tidak Ada", "Horizontal", "Vertikal", "Horizontal & Vertikal"])
-    flip_map = {"Tidak Ada": None, "Horizontal": 1, "Vertikal": 0, "Horizontal & Vertikal": -1}
-    flip_code = flip_map[flip_choice]
-    if flip_code is not None:
-        flipped = cv2.flip(img_rgb, flip_code)
-        st.image(flipped, caption=f"Flip {flip_choice}", use_column_width=True)
-    else:
-        st.image(img_rgb, caption="Asli (tanpa flip)", use_column_width=True)
-    st.markdown("</div>", unsafe_allow_html=True)
-
-    st.markdown("<div class='card'>", unsafe_allow_html=True)
-    st.markdown("<div class='card-title'>✂️ 3.4 Cropping</div>", unsafe_allow_html=True)
-    crop_enabled = st.checkbox("Aktifkan cropping", value=False)
-    if crop_enabled:
-        c1, c2, c3, c4 = st.columns(4)
-        cx = c1.number_input("X", 0, w_orig - 1, 0)
-        cy = c2.number_input("Y", 0, h_orig - 1, 0)
-        cw = c3.number_input("Lebar", 1, w_orig, min(300, w_orig))
-        ch = c4.number_input("Tinggi", 1, h_orig, min(300, h_orig))
-        x1, y1 = min(cx, w_orig - 1), min(cy, h_orig - 1)
-        x2, y2 = min(x1 + cw, w_orig), min(y1 + ch, h_orig)
-        if x2 > x1 and y2 > y1:
-            st.image(img_rgb[y1:y2, x1:x2], caption=f"Crop ({x1},{y1}) → ({x2},{y2})", use_column_width=True)
-    else:
-        st.info("Centang checkbox untuk mengaktifkan cropping")
-    st.markdown("</div>", unsafe_allow_html=True)
-
-    st.markdown("<div class='card'>", unsafe_allow_html=True)
-    st.markdown("<div class='card-title'>📏 3.5 Scaling (Resize)</div>", unsafe_allow_html=True)
-    scale_method = st.selectbox("Metode", ["Persentase", "Ukuran Tetap"], key="scale_method")
-    if scale_method == "Persentase":
-        pct = st.slider("Skala (%)", 10, 200, 100)
-        if pct != 100:
-            nw = int(w_orig * pct / 100)
-            nh = int(h_orig * pct / 100)
-            scaled = cv2.resize(img_rgb, (nw, nh), interpolation=cv2.INTER_AREA if pct < 100 else cv2.INTER_LINEAR)
-            st.image(scaled, caption=f"{pct}% → {nw}×{nh}", use_column_width=True)
+        st.markdown("<div class='card'>", unsafe_allow_html=True)
+        st.markdown("<div class='card-title'>🔄 3.2 Rotasi</div>", unsafe_allow_html=True)
+        rot_angle = st.slider("Sudut rotasi (°)", -180, 180, 0)
+        if rot_angle != 0:
+            center = (w_orig // 2, h_orig // 2)
+            M = cv2.getRotationMatrix2D(center, rot_angle, 1.0)
+            rotated = cv2.warpAffine(img_rgb, M, (w_orig, h_orig), borderValue=(255, 255, 255))
+            st.image(rotated, caption=f"Rotasi {rot_angle}°", use_column_width=True)
         else:
-            st.image(img_rgb, caption="100% (asli)", use_column_width=True)
-    else:
-        c1, c2 = st.columns(2)
-        fw = c1.number_input("Lebar (px)", 1, 2000, w_orig)
-        fh = c2.number_input("Tinggi (px)", 1, 2000, h_orig)
-        if fw != w_orig or fh != h_orig:
-            st.image(cv2.resize(img_rgb, (fw, fh), interpolation=cv2.INTER_AREA), caption=f"{fw}×{fh}", use_column_width=True)
-        else:
-            st.image(img_rgb, caption="Ukuran asli", use_column_width=True)
-    st.markdown("</div>", unsafe_allow_html=True)
+            st.image(img_rgb, caption="Rotasi 0° (asli)", use_column_width=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
-    st.markdown("<div class='card'>", unsafe_allow_html=True)
-    st.markdown("<div class='card-title'>🌓 3.6 Negasi (Invers Warna)</div>", unsafe_allow_html=True)
-    col1, col2 = st.columns(2)
-    col1.image(img_rgb, caption="Original", use_column_width=True)
-    col2.image(cv2.bitwise_not(img_rgb), caption="Negasi", use_column_width=True)
-    st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("<div class='card'>", unsafe_allow_html=True)
+        st.markdown("<div class='card-title'>🪞 3.3 Flipping</div>", unsafe_allow_html=True)
+        flip_choice = st.selectbox("Arah Flip", ["Tidak Ada", "Horizontal", "Vertikal", "Horizontal & Vertikal"])
+        flip_map = {"Tidak Ada": None, "Horizontal": 1, "Vertikal": 0, "Horizontal & Vertikal": -1}
+        flip_code = flip_map[flip_choice]
+        if flip_code is not None:
+            flipped = cv2.flip(img_rgb, flip_code)
+            st.image(flipped, caption=f"Flip {flip_choice}", use_column_width=True)
+        else:
+            st.image(img_rgb, caption="Asli (tanpa flip)", use_column_width=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+
+        st.markdown("<div class='card'>", unsafe_allow_html=True)
+        st.markdown("<div class='card-title'>✂️ 3.4 Cropping</div>", unsafe_allow_html=True)
+        crop_enabled = st.checkbox("Aktifkan cropping", value=False)
+        if crop_enabled:
+            c1, c2, c3, c4 = st.columns(4)
+            cx = c1.number_input("X", 0, w_orig - 1, 0)
+            cy = c2.number_input("Y", 0, h_orig - 1, 0)
+            cw = c3.number_input("Lebar", 1, w_orig, min(300, w_orig))
+            ch = c4.number_input("Tinggi", 1, h_orig, min(300, h_orig))
+            x1, y1 = min(cx, w_orig - 1), min(cy, h_orig - 1)
+            x2, y2 = min(x1 + cw, w_orig), min(y1 + ch, h_orig)
+            if x2 > x1 and y2 > y1:
+                st.image(img_rgb[y1:y2, x1:x2], caption=f"Crop ({x1},{y1}) → ({x2},{y2})", use_column_width=True)
+        else:
+            st.info("Centang checkbox untuk mengaktifkan cropping")
+        st.markdown("</div>", unsafe_allow_html=True)
+
+        st.markdown("<div class='card'>", unsafe_allow_html=True)
+        st.markdown("<div class='card-title'>📏 3.5 Scaling (Resize)</div>", unsafe_allow_html=True)
+        scale_method = st.selectbox("Metode", ["Persentase", "Ukuran Tetap"], key="scale_method")
+        if scale_method == "Persentase":
+            pct = st.slider("Skala (%)", 10, 200, 100)
+            if pct != 100:
+                nw = int(w_orig * pct / 100)
+                nh = int(h_orig * pct / 100)
+                scaled = cv2.resize(img_rgb, (nw, nh), interpolation=cv2.INTER_AREA if pct < 100 else cv2.INTER_LINEAR)
+                st.image(scaled, caption=f"{pct}% → {nw}×{nh}", use_column_width=True)
+            else:
+                st.image(img_rgb, caption="100% (asli)", use_column_width=True)
+        else:
+            c1, c2 = st.columns(2)
+            fw = c1.number_input("Lebar (px)", 1, 2000, w_orig)
+            fh = c2.number_input("Tinggi (px)", 1, 2000, h_orig)
+            if fw != w_orig or fh != h_orig:
+                st.image(cv2.resize(img_rgb, (fw, fh), interpolation=cv2.INTER_AREA), caption=f"{fw}×{fh}", use_column_width=True)
+            else:
+                st.image(img_rgb, caption="Ukuran asli", use_column_width=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+
+        st.markdown("<div class='card'>", unsafe_allow_html=True)
+        st.markdown("<div class='card-title'>🌓 3.6 Negasi (Invers Warna)</div>", unsafe_allow_html=True)
+        col1, col2 = st.columns(2)
+        col1.image(img_rgb, caption="Original", use_column_width=True)
+        col2.image(cv2.bitwise_not(img_rgb), caption="Negasi", use_column_width=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+    except Exception as e:
+        import traceback
+        err.error(f"Tab 3 Error: {e}")
+        err.code(traceback.format_exc())
 
 # ===== TAB 4: DETEKSI TEPI =====
 with tab4_label:
-    st.markdown("<div class='card'>", unsafe_allow_html=True)
-    st.markdown("<div class='card-title'>✏️ Deteksi Tepi</div>", unsafe_allow_html=True)
-    st.markdown("Menemukan batas objek dalam citra menggunakan operator gradien.")
+    try:
+        st.markdown("<div class='card'>", unsafe_allow_html=True)
+        st.markdown("<div class='card-title'>✏️ Deteksi Tepi</div>", unsafe_allow_html=True)
+        st.markdown("Menemukan batas objek dalam citra menggunakan operator gradien.")
 
-    edge_method = st.selectbox("Metode", ["Sobel", "Prewitt", "Robert Cross", "Laplacian"])
-    thresh_edge = st.slider("Threshold", 0, 255, 30, help="Makin rendah, makin banyak tepi terdeteksi")
-    blur_k = st.slider("Gaussian Blur", 1, 15, 3, step=2, help="Perhalus citra sebelum deteksi")
+        edge_method = st.selectbox("Metode", ["Sobel", "Prewitt", "Robert Cross", "Laplacian"])
+        thresh_edge = st.slider("Threshold", 0, 255, 30, help="Makin rendah, makin banyak tepi terdeteksi")
+        blur_k = st.slider("Gaussian Blur", 1, 15, 3, step=2, help="Perhalus citra sebelum deteksi")
 
-    pre_gray = cv2.GaussianBlur(img_gray, (blur_k, blur_k), 0) if blur_k > 1 else img_gray.copy()
-    edges = detect_edges(pre_gray, edge_method)
+        pre_gray = cv2.GaussianBlur(img_gray, (blur_k, blur_k), 0) if blur_k > 1 else img_gray.copy()
+        edges = detect_edges(pre_gray, edge_method)
 
-    if edges is not None:
-        _, edges_bin = cv2.threshold(edges, thresh_edge, 255, cv2.THRESH_BINARY)
-        col1, col2, col3 = st.columns(3)
-        col1.image(img_rgb, caption="Original", use_column_width=True)
-        col2.image(edges, caption=f"{edge_method} (gradien)", use_column_width=True, clamp=True)
-        col3.image(edges_bin, caption=f"{edge_method} (threshold={thresh_edge})", use_column_width=True, clamp=True)
-    st.markdown("</div>", unsafe_allow_html=True)
+        if edges is not None:
+            _, edges_bin = cv2.threshold(edges, thresh_edge, 255, cv2.THRESH_BINARY)
+            col1, col2, col3 = st.columns(3)
+            col1.image(img_rgb, caption="Original", use_column_width=True)
+            col2.image(edges, caption=f"{edge_method} (gradien)", use_column_width=True, clamp=True)
+            col3.image(edges_bin, caption=f"{edge_method} (threshold={thresh_edge})", use_column_width=True, clamp=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
-    edge_info = {
-        "Sobel": """
-        **Sobel** — Konvolusi kernel 3×3 untuk gradien horizontal ($G_x$) dan vertikal ($G_y$).
-        $$\\text{Magnitude} = \\sqrt{G_x^2 + G_y^2}$$
-        $$G_x = \\begin{bmatrix} -1 & 0 & 1 \\\\ -2 & 0 & 2 \\\\ -1 & 0 & 1 \\end{bmatrix} \\quad 
-        G_y = \\begin{bmatrix} -1 & -2 & -1 \\\\ 0 & 0 & 0 \\\\ 1 & 2 & 1 \\end{bmatrix}$$
-        """,
-        "Prewitt": """
-        **Prewitt** — Mirip Sobel dengan bobot seragam (1) untuk semua tetangga.
-        $$G_x = \\begin{bmatrix} -1 & 0 & 1 \\\\ -1 & 0 & 1 \\\\ -1 & 0 & 1 \\end{bmatrix} \\quad 
-        G_y = \\begin{bmatrix} -1 & -1 & -1 \\\\ 0 & 0 & 0 \\\\ 1 & 1 & 1 \\end{bmatrix}$$
-        """,
-        "Robert Cross": """
-        **Robert Cross** — Kernel 2×2 sederhana, sensitif terhadap tepi diagonal.
-        $$G_x = \\begin{bmatrix} 1 & 0 \\\\ 0 & -1 \\end{bmatrix} \\quad 
-        G_y = \\begin{bmatrix} 0 & 1 \\\\ -1 & 0 \\end{bmatrix}$$
-        """,
-        "Laplacian": """
-        **Laplacian** — Detektor orde-2 menggunakan turunan kedua, sensitif terhadap noise.
-        $$\\nabla^2 f = \\frac{\\partial^2 f}{\\partial x^2} + \\frac{\\partial^2 f}{\\partial y^2}$$
-        Kernel: $$\\begin{bmatrix} 0 & 1 & 0 \\\\ 1 & -4 & 1 \\\\ 0 & 1 & 0 \\end{bmatrix}$$
-        """
-    }
-    with st.expander(f"📖 Teori Metode {edge_method}"):
-        st.markdown(edge_info.get(edge_method, ""))
+        edge_info = {
+            "Sobel": """
+            **Sobel** — Konvolusi kernel 3×3 untuk gradien horizontal ($G_x$) dan vertikal ($G_y$).
+            $$\\text{Magnitude} = \\sqrt{G_x^2 + G_y^2}$$
+            $$G_x = \\begin{bmatrix} -1 & 0 & 1 \\\\ -2 & 0 & 2 \\\\ -1 & 0 & 1 \\end{bmatrix} \\quad 
+            G_y = \\begin{bmatrix} -1 & -2 & -1 \\\\ 0 & 0 & 0 \\\\ 1 & 2 & 1 \\end{bmatrix}$$
+            """,
+            "Prewitt": """
+            **Prewitt** — Mirip Sobel dengan bobot seragam (1) untuk semua tetangga.
+            $$G_x = \\begin{bmatrix} -1 & 0 & 1 \\\\ -1 & 0 & 1 \\\\ -1 & 0 & 1 \\end{bmatrix} \\quad 
+            G_y = \\begin{bmatrix} -1 & -1 & -1 \\\\ 0 & 0 & 0 \\\\ 1 & 1 & 1 \\end{bmatrix}$$
+            """,
+            "Robert Cross": """
+            **Robert Cross** — Kernel 2×2 sederhana, sensitif terhadap tepi diagonal.
+            $$G_x = \\begin{bmatrix} 1 & 0 \\\\ 0 & -1 \\end{bmatrix} \\quad 
+            G_y = \\begin{bmatrix} 0 & 1 \\\\ -1 & 0 \\end{bmatrix}$$
+            """,
+            "Laplacian": """
+            **Laplacian** — Detektor orde-2 menggunakan turunan kedua, sensitif terhadap noise.
+            $$\\nabla^2 f = \\frac{\\partial^2 f}{\\partial x^2} + \\frac{\\partial^2 f}{\\partial y^2}$$
+            Kernel: $$\\begin{bmatrix} 0 & 1 & 0 \\\\ 1 & -4 & 1 \\\\ 0 & 1 & 0 \\end{bmatrix}$$
+            """
+        }
+        with st.expander(f"📖 Teori Metode {edge_method}"):
+            st.markdown(edge_info.get(edge_method, ""))
+    except Exception as e:
+        import traceback
+        err.error(f"Tab 4 Error: {e}")
+        err.code(traceback.format_exc())
 
 # ===== TAB 5: SEGMENTASI & VOLUME =====
 with tab5_label:
-    st.markdown("<div class='card'>", unsafe_allow_html=True)
-    st.markdown("<div class='card-title'>🎯 Pipeline Segmentasi</div>", unsafe_allow_html=True)
-    st.markdown("""
-    <div class='pipeline'>
-        <div class='pipeline-step'>📷 Input</div><div class='pipeline-arrow'>→</div>
-        <div class='pipeline-step'>🌀 Gaussian<br>Blur</div><div class='pipeline-arrow'>→</div>
-        <div class='pipeline-step'>⚡ Otsu<br>Threshold</div><div class='pipeline-arrow'>→</div>
-        <div class='pipeline-step'>🔧 Morfologi</div><div class='pipeline-arrow'>→</div>
-        <div class='pipeline-step'>📊 Deteksi<br>Kontur</div><div class='pipeline-arrow'>→</div>
-        <div class='pipeline-step'>📐 Estimasi<br>Volume</div>
-    </div>
-    """, unsafe_allow_html=True)
-    st.markdown("</div>", unsafe_allow_html=True)
-
-    col_left, col_right = st.columns(2)
-
-    with col_left:
+    try:
         st.markdown("<div class='card'>", unsafe_allow_html=True)
-        st.markdown("<div class='card-title'>🌀 Preprocessing</div>", unsafe_allow_html=True)
-        seg_blur = st.slider("Kernel Gaussian Blur", 1, 21, 5, step=2)
-        blur_gray = cv2.GaussianBlur(img_gray, (seg_blur, seg_blur), 0)
-        st.image(blur_gray, caption=f"Gaussian Blur (kernel={seg_blur})", use_column_width=True, clamp=True)
+        st.markdown("<div class='card-title'>🎯 Pipeline Segmentasi</div>", unsafe_allow_html=True)
+        st.markdown("""
+        <div class='pipeline'>
+            <div class='pipeline-step'>📷 Input</div><div class='pipeline-arrow'>→</div>
+            <div class='pipeline-step'>🌀 Gaussian<br>Blur</div><div class='pipeline-arrow'>→</div>
+            <div class='pipeline-step'>⚡ Otsu<br>Threshold</div><div class='pipeline-arrow'>→</div>
+            <div class='pipeline-step'>🔧 Morfologi</div><div class='pipeline-arrow'>→</div>
+            <div class='pipeline-step'>📊 Deteksi<br>Kontur</div><div class='pipeline-arrow'>→</div>
+            <div class='pipeline-step'>📐 Estimasi<br>Volume</div>
+        </div>
+        """, unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
-    with col_right:
-        st.markdown("<div class='card'>", unsafe_allow_html=True)
-        st.markdown("<div class='card-title'>⚡ Otsu Thresholding</div>", unsafe_allow_html=True)
-        _, otsu_binary = cv2.threshold(blur_gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-        st.image(otsu_binary, caption="Otsu Threshold (otomatis)", use_column_width=True, clamp=True)
+        col_left, col_right = st.columns(2)
 
-        use_manual = st.checkbox("Gunakan threshold manual", value=False)
-        if use_manual:
-            manual_t = st.slider("Nilai threshold", 0, 255, 127)
-            _, manual_bin = cv2.threshold(blur_gray, manual_t, 255, cv2.THRESH_BINARY)
-            st.image(manual_bin, caption=f"Manual threshold={manual_t}", use_column_width=True, clamp=True)
-        st.markdown("</div>", unsafe_allow_html=True)
+        with col_left:
+            st.markdown("<div class='card'>", unsafe_allow_html=True)
+            st.markdown("<div class='card-title'>🌀 Preprocessing</div>", unsafe_allow_html=True)
+            seg_blur = st.slider("Kernel Gaussian Blur", 1, 21, 5, step=2)
+            blur_gray = cv2.GaussianBlur(img_gray, (seg_blur, seg_blur), 0)
+            st.image(blur_gray, caption=f"Gaussian Blur (kernel={seg_blur})", use_column_width=True, clamp=True)
+            st.markdown("</div>", unsafe_allow_html=True)
 
-    st.markdown("<div class='card'>", unsafe_allow_html=True)
-    st.markdown("<div class='card-title'>🔧 Operasi Morfologi</div>", unsafe_allow_html=True)
-    c1, c2, c3 = st.columns(3)
-    morph_op = c1.selectbox("Operasi", ["Erosi", "Dilasi", "Opening", "Closing"])
-    morph_k = c2.slider("Kernel", 3, 21, 5, step=2)
-    morph_iter = c3.slider("Iterasi", 1, 10, 1)
-    morph_result = apply_morphology(otsu_binary, morph_op, morph_k, morph_iter)
-    col1, col2 = st.columns(2)
-    col1.image(otsu_binary, caption="Sebelum morfologi", use_column_width=True, clamp=True)
-    col2.image(morph_result, caption=f"Sesudah {morph_op} (kernel={morph_k}, iter={morph_iter})", use_column_width=True, clamp=True)
-    st.markdown("</div>", unsafe_allow_html=True)
-
-    st.markdown("<div class='card'>", unsafe_allow_html=True)
-    st.markdown("<div class='card-title'>📊 Deteksi Kontur & Estimasi Volume</div>", unsafe_allow_html=True)
-    contours, _ = cv2.findContours(morph_result, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    min_area = st.slider("Min area kontur (filter noise)", 10, 1000, 100)
-    filtered = [c for c in contours if cv2.contourArea(c) >= min_area]
-
-    contour_all = img_rgb.copy()
-    cv2.drawContours(contour_all, contours, -1, (0, 255, 0), 2)
-    contour_filt = img_rgb.copy()
-    cv2.drawContours(contour_filt, filtered, -1, (0, 255, 0), 2)
-
-    col1, col2 = st.columns(2)
-    col1.image(contour_all, caption=f"Semua kontur ({len(contours)})", use_column_width=True)
-    col2.image(contour_filt, caption=f"Filtered (≥{min_area} px) = {len(filtered)}", use_column_width=True)
-    st.markdown("</div>", unsafe_allow_html=True)
-
-    if len(filtered) > 0:
-        hull_img = img_rgb.copy()
-        total_area = 0
-        for c in filtered:
-            total_area += cv2.contourArea(c)
-            hull = cv2.convexHull(c)
-            cv2.drawContours(hull_img, [hull], -1, (255, 0, 0), 2)
-
-        pct = (total_area / (img_rgb.shape[0] * img_rgb.shape[1])) * 100
+        with col_right:
+            st.markdown("<div class='card'>", unsafe_allow_html=True)
+            st.markdown("<div class='card-title'>⚡ Otsu Thresholding</div>", unsafe_allow_html=True)
+            _, otsu_binary = cv2.threshold(blur_gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+            st.image(otsu_binary, caption="Otsu Threshold (otomatis)", use_column_width=True, clamp=True)
+            st.markdown("</div>", unsafe_allow_html=True)
 
         st.markdown("<div class='card'>", unsafe_allow_html=True)
-        st.markdown("<div class='card-title'>📐 Hasil Perhitungan</div>", unsafe_allow_html=True)
-        m1, m2, m3 = st.columns(3)
-        m1.markdown(f"<div class='metric-item'><div class='metric-value'>{len(filtered)}</div><div class='metric-label'>Objek Terdeteksi</div></div>", unsafe_allow_html=True)
-        m2.markdown(f"<div class='metric-item'><div class='metric-value'>{int(total_area):,}</div><div class='metric-label'>Area (pixel²)</div></div>", unsafe_allow_html=True)
-        m3.markdown(f"<div class='metric-item'><div class='metric-value'>{pct:.2f}%</div><div class='metric-label'>Coverage</div></div>", unsafe_allow_html=True)
-
-        with st.expander("📏 Estimasi Area & Volume (Real World)"):
-            c_a, c_b = st.columns(2)
-            img_w_cm = c_a.number_input("Lebar citra nyata (cm)", 1.0, 1000.0, 100.0,
-                                         help="Perkiraan lebar sungai yang tercakup dalam citra")
-            thickness = c_b.number_input("Ketebalan sampah (mm)", 0.1, 50.0, 1.0,
-                                          help="Estimasi ketebalan rata-rata sampah plastik")
-            px_per_cm = w_orig / img_w_cm if img_w_cm > 0 else 0
-            area_cm2 = total_area / (px_per_cm ** 2) if px_per_cm > 0 else 0
-            vol_cm3 = area_cm2 * (thickness / 10)
-
-            x1, x2, x3 = st.columns(3)
-            x1.markdown(f"<div class='metric-item'><div class='metric-value'>{px_per_cm:.1f}</div><div class='metric-label'>Kalibrasi (px/cm)</div></div>", unsafe_allow_html=True)
-            x2.markdown(f"<div class='metric-item'><div class='metric-value'>{area_cm2:.1f}</div><div class='metric-label'>Area (cm²)</div></div>", unsafe_allow_html=True)
-            x3.markdown(f"<div class='metric-item'><div class='metric-value'>{vol_cm3:.2f}</div><div class='metric-label'>Volume (cm³)</div></div>", unsafe_allow_html=True)
-        st.markdown("</div>", unsafe_allow_html=True)
-
-        st.markdown("<div class='card'>", unsafe_allow_html=True)
-        st.markdown("<div class='card-title'>📌 Visualisasi Kontur & Convex Hull</div>", unsafe_allow_html=True)
+        st.markdown("<div class='card-title'>🔧 Operasi Morfologi</div>", unsafe_allow_html=True)
+        c1, c2, c3 = st.columns(3)
+        morph_op = c1.selectbox("Operasi", ["Erosi", "Dilasi", "Opening", "Closing"])
+        morph_k = c2.slider("Kernel", 3, 21, 5, step=2)
+        morph_iter = c3.slider("Iterasi", 1, 10, 1)
+        morph_result = apply_morphology(otsu_binary, morph_op, morph_k, morph_iter)
         col1, col2 = st.columns(2)
-        col1.image(contour_filt, caption=f"Kontur ({len(filtered)} objek)", use_column_width=True)
-        col2.image(hull_img, caption="Convex Hull", use_column_width=True)
+        col1.image(otsu_binary, caption="Sebelum morfologi", use_column_width=True, clamp=True)
+        col2.image(morph_result, caption=f"Sesudah {morph_op} (kernel={morph_k}, iter={morph_iter})", use_column_width=True, clamp=True)
         st.markdown("</div>", unsafe_allow_html=True)
-    else:
-        st.warning("Tidak ada kontur terdeteksi. Sesuaikan parameter threshold, morfologi, atau min area.")
 
-    st.markdown("<div class='card'>", unsafe_allow_html=True)
-    st.markdown("<div class='card-title'>📈 Histogram & Threshold Otsu</div>", unsafe_allow_html=True)
-    otsu_val = cv2.threshold(blur_gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[0]
-    fig_h, ax_h = plt.subplots(figsize=(10, 3.5))
-    fig_h.patch.set_facecolor('white')
-    ax_h.hist(blur_gray.ravel(), bins=256, range=[0, 256], color='#94a3b8', alpha=0.7)
-    ax_h.axvline(otsu_val, color='#ef4444', linestyle='--', linewidth=2, label=f'Otsu = {otsu_val:.0f}')
-    ax_h.set_title("Histogram Intensitas", fontsize=11, fontweight='bold')
-    ax_h.set_xlabel("Intensitas Pixel")
-    ax_h.set_ylabel("Frekuensi")
-    ax_h.legend()
-    ax_h.grid(True, alpha=0.2)
-    st.pyplot(fig_h)
-    plt.close()
-    st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("<div class='card'>", unsafe_allow_html=True)
+        st.markdown("<div class='card-title'>📊 Deteksi Kontur & Estimasi Volume</div>", unsafe_allow_html=True)
+        contours, _ = cv2.findContours(morph_result, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        min_area = st.slider("Min area kontur (filter noise)", 10, 1000, 100)
+        filtered = [c for c in contours if cv2.contourArea(c) >= min_area]
+
+        contour_all = img_rgb.copy()
+        cv2.drawContours(contour_all, contours, -1, (0, 255, 0), 2)
+        contour_filt = img_rgb.copy()
+        cv2.drawContours(contour_filt, filtered, -1, (0, 255, 0), 2)
+
+        col1, col2 = st.columns(2)
+        col1.image(contour_all, caption=f"Semua kontur ({len(contours)})", use_column_width=True)
+        col2.image(contour_filt, caption=f"Filtered (≥{min_area} px) = {len(filtered)}", use_column_width=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+
+        if len(filtered) > 0:
+            hull_img = img_rgb.copy()
+            total_area = 0
+            for c in filtered:
+                total_area += cv2.contourArea(c)
+                hull = cv2.convexHull(c)
+                cv2.drawContours(hull_img, [hull], -1, (255, 0, 0), 2)
+
+            pct = (total_area / (img_rgb.shape[0] * img_rgb.shape[1])) * 100
+
+            st.markdown("<div class='card'>", unsafe_allow_html=True)
+            st.markdown("<div class='card-title'>📐 Hasil Perhitungan</div>", unsafe_allow_html=True)
+            m1, m2, m3 = st.columns(3)
+            m1.markdown(f"<div class='metric-item'><div class='metric-value'>{len(filtered)}</div><div class='metric-label'>Objek Terdeteksi</div></div>", unsafe_allow_html=True)
+            m2.markdown(f"<div class='metric-item'><div class='metric-value'>{int(total_area):,}</div><div class='metric-label'>Area (pixel²)</div></div>", unsafe_allow_html=True)
+            m3.markdown(f"<div class='metric-item'><div class='metric-value'>{pct:.2f}%</div><div class='metric-label'>Coverage</div></div>", unsafe_allow_html=True)
+
+            with st.expander("📏 Estimasi Area & Volume (Real World)"):
+                c_a, c_b = st.columns(2)
+                img_w_cm = c_a.number_input("Lebar citra nyata (cm)", 1.0, 1000.0, 100.0)
+                thickness = c_b.number_input("Ketebalan sampah (mm)", 0.1, 50.0, 1.0)
+                px_per_cm = w_orig / img_w_cm if img_w_cm > 0 else 0
+                area_cm2 = total_area / (px_per_cm ** 2) if px_per_cm > 0 else 0
+                vol_cm3 = area_cm2 * (thickness / 10)
+
+                x1, x2, x3 = st.columns(3)
+                x1.markdown(f"<div class='metric-item'><div class='metric-value'>{px_per_cm:.1f}</div><div class='metric-label'>Kalibrasi (px/cm)</div></div>", unsafe_allow_html=True)
+                x2.markdown(f"<div class='metric-item'><div class='metric-value'>{area_cm2:.1f}</div><div class='metric-label'>Area (cm²)</div></div>", unsafe_allow_html=True)
+                x3.markdown(f"<div class='metric-item'><div class='metric-value'>{vol_cm3:.2f}</div><div class='metric-label'>Volume (cm³)</div></div>", unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
+
+            st.markdown("<div class='card'>", unsafe_allow_html=True)
+            st.markdown("<div class='card-title'>📌 Visualisasi Kontur & Convex Hull</div>", unsafe_allow_html=True)
+            col1, col2 = st.columns(2)
+            col1.image(contour_filt, caption=f"Kontur ({len(filtered)} objek)", use_column_width=True)
+            col2.image(hull_img, caption="Convex Hull", use_column_width=True)
+            st.markdown("</div>", unsafe_allow_html=True)
+        else:
+            st.warning("Tidak ada kontur terdeteksi. Sesuaikan parameter threshold, morfologi, atau min area.")
+
+        st.markdown("<div class='card'>", unsafe_allow_html=True)
+        st.markdown("<div class='card-title'>📈 Histogram & Threshold Otsu</div>", unsafe_allow_html=True)
+        otsu_val = cv2.threshold(blur_gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[0]
+        fig_h, ax_h = plt.subplots(figsize=(10, 3.5))
+        fig_h.patch.set_facecolor('white')
+        ax_h.hist(blur_gray.ravel(), bins=256, range=[0, 256], color='#94a3b8', alpha=0.7)
+        ax_h.axvline(otsu_val, color='#ef4444', linestyle='--', linewidth=2, label=f'Otsu = {otsu_val:.0f}')
+        ax_h.set_title("Histogram Intensitas", fontsize=11, fontweight='bold')
+        ax_h.set_xlabel("Intensitas Pixel")
+        ax_h.set_ylabel("Frekuensi")
+        ax_h.legend()
+        ax_h.grid(True, alpha=0.2)
+        st.pyplot(fig_h)
+        st.markdown("</div>", unsafe_allow_html=True)
+    except Exception as e:
+        import traceback
+        err.error(f"Tab 5 Error: {e}")
+        err.code(traceback.format_exc())
 
 st.markdown("""
 <div class='footer'>
