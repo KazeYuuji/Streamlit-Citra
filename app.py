@@ -2,6 +2,8 @@ import streamlit as st
 import cv2
 import numpy as np
 from PIL import Image
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 st.set_page_config(
@@ -12,9 +14,7 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-    
-    * { font-family: 'Inter', sans-serif; }
+    * { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
     
     .gradient-header {
         background: linear-gradient(135deg, #0d7377 0%, #14a3a8 50%, #0ea5e9 100%);
@@ -213,8 +213,9 @@ if 'img_gray' not in st.session_state:
     st.session_state.img_gray = None
 if 'img_bgr' not in st.session_state:
     st.session_state.img_bgr = None
+if 'uploaded_name' not in st.session_state:
+    st.session_state.uploaded_name = ''
 
-@st.cache_data
 def convert_rgb_to_cmy(rgb):
     norm = rgb.astype(np.float32) / 255.0
     cmy = 1.0 - norm
@@ -328,13 +329,14 @@ with st.sidebar:
             st.session_state.img_rgb = img_rgb
             st.session_state.img_gray = img_gray
             st.session_state.img_bgr = img_bgr
+            st.session_state.uploaded_name = uploaded_file.name
 
             st.markdown(f"""
-            <div style="background:#f0fdf4;padding:0.8rem;border-radius:10px;border-left:3px solid #22c55e;margin-bottom:1rem;">
-                <div style="font-size:0.8rem;font-weight:600;color:#166534;">✓ {uploaded_file.name}</div>
-                <div style="font-size:0.7rem;color:#64748b;">{img_rgb.shape[1]}×{img_rgb.shape[0]} px</div>
-            </div>
-            """, unsafe_allow_html=True)
+        <div style="background:#f0fdf4;padding:0.8rem;border-radius:10px;border-left:3px solid #22c55e;margin-bottom:1rem;">
+            <div style="font-size:0.8rem;font-weight:600;color:#166534;">✓ {uploaded_file.name}</div>
+            <div style="font-size:0.7rem;color:#64748b;">{img_rgb.shape[1]}×{img_rgb.shape[0]} px</div>
+        </div>
+        """, unsafe_allow_html=True)
 
     st.markdown("<hr style='margin:1rem 0;border-color:#e2e8f0;'>", unsafe_allow_html=True)
     st.markdown("""
@@ -408,10 +410,6 @@ if st.session_state.img_rgb is None:
     """, unsafe_allow_html=True)
     st.stop()
 
-if st.session_state.img_rgb is None:
-    st.error("Silakan upload citra terlebih dahulu melalui sidebar.")
-    st.stop()
-
 img_rgb = st.session_state.img_rgb
 img_gray = st.session_state.img_gray
 img_bgr = st.session_state.img_bgr
@@ -420,7 +418,7 @@ h_orig, w_orig = img_rgb.shape[:2]
 st.markdown(f"""
 <div class="gradient-header">
     <h1>🌊 Segmentasi & Perhitungan Volume Sampah Plastik Makro</h1>
-    <p>{w_orig}×{h_orig} px | Upload: {uploaded_file.name if uploaded_file else '—'}</p>
+    <p>{w_orig}×{h_orig} px | File: {st.session_state.uploaded_name or '—'}</p>
 </div>
 """, unsafe_allow_html=True)
 
