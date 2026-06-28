@@ -153,7 +153,7 @@ def main():
             st.success(f"✔ **{uploaded_file.name}**")
             h, w = cv2_img_bgr.shape[:2]
             st.info(f"**Dimensi:** {w} x {h} px\n**Format:** {uploaded_file.type}")
-            st.image(cv2_img_rgb, caption="Citra Asli", use_column_width=True)
+            st.image(cv2_img_rgb, caption="Citra Asli", width="stretch")
 
             # Save to session state
             st.session_state["pil_img"] = pil_img
@@ -214,13 +214,17 @@ def main():
 
         with col1:
             st.subheader("Citra Asli (RGB)")
-            st.image(cv2_img_rgb, caption=f"Dimensi: {cv2_img_rgb.shape[1]} x {cv2_img_rgb.shape[0]} px", use_column_width=True)
+            st.image(cv2_img_rgb, caption=f"Dimensi: {cv2_img_rgb.shape[1]} x {cv2_img_rgb.shape[0]} px", width="stretch")
 
-            st.info("""
+            w_val = cv2_img_rgb.shape[1]
+            h_val = cv2_img_rgb.shape[0]
+            total_px = w_val * h_val
+            total_data = total_px * 3
+            st.info(f"""
             **📌 Penjelasan:** Citra digital adalah **matriks 2 dimensi** yang setiap elemennya disebut **pixel** (picture element). 
-            Citra ini memiliki **3 kanal warna**: Red (R), Green (G), Blue (B). Dimensi `{w}×{h}` berarti ada **{h} baris** dan **{w} kolom** pixel. 
-            Total ada **{h * w:,} pixel**, dan setiap pixel menyimpan 3 angka (R, G, B) sehingga total data = **{h * w * 3:,} angka**.
-            """.format(w=cv2_img_rgb.shape[1], h=cv2_img_rgb.shape[0]))
+            Citra ini memiliki **3 kanal warna**: Red (R), Green (G), Blue (B). Dimensi `{w_val}×{h_val}` berarti ada **{h_val} baris** dan **{w_val} kolom** pixel. 
+            Total ada **{total_px:,} pixel**, dan setiap pixel menyimpan 3 angka (R, G, B) sehingga total data = **{total_data:,} angka**.
+            """)
 
             # RGB Channel Visualization
             st.subheader("Kanal RGB Terpisah")
@@ -269,7 +273,7 @@ def main():
 
         with col2:
             st.subheader("Citra Grayscale (Hitam-Putih)")
-            st.image(gray_img, caption="Konversi RGB → Grayscale", use_column_width=True, channels="GRAY")
+            st.image(gray_img, caption="Konversi RGB → Grayscale", width="stretch", channels="GRAY")
 
             st.info("""
             **📌 Penjelasan:** **Grayscale** adalah citra dengan **1 kanal** saja (bukan 3), dengan nilai 0 (hitam) sampai 255 (putih).
@@ -362,7 +366,7 @@ def main():
             new_w = int(cv2_img_rgb.shape[1] * scale_factor)
             new_h = int(cv2_img_rgb.shape[0] * scale_factor)
             sampled = cv2.resize(cv2_img_rgb, (new_w, new_h), interpolation=cv2.INTER_NEAREST)
-            st.image(sampled, caption=f"Sampling {scale_factor:.1f}x → {new_w}×{new_h} px", use_column_width=True)
+            st.image(sampled, caption=f"Sampling {scale_factor:.1f}x → {new_w}×{new_h} px", width="stretch")
             st.caption(f"Resolusi asli: {cv2_img_rgb.shape[1]}×{cv2_img_rgb.shape[0]} → {new_w}×{new_h}")
 
             st.info("""
@@ -387,7 +391,7 @@ def main():
             levels = 2 ** bit_depth
             scale_q = 255 / (levels - 1)
             quantized = (np.round(gray_img / scale_q) * scale_q).astype(np.uint8)
-            st.image(quantized, caption=f"Kuantisasi {bit_depth} bit ({levels} level)", use_column_width=True, channels="GRAY")
+            st.image(quantized, caption=f"Kuantisasi {bit_depth} bit ({levels} level)", width="stretch", channels="GRAY")
             st.caption(f"Level warna: {levels} (bit depth: {bit_depth})")
 
             st.info("""
@@ -536,7 +540,7 @@ def main():
         with col_g1:
             if "Grayscale" in selected_ops:
                 st.subheader("⚫ Grayscale (Konversi ke Abu-Abu)")
-                st.image(gray_img, caption="Hasil Konversi Grayscale", use_column_width=True, channels="GRAY")
+                st.image(gray_img, caption="Hasil Konversi Grayscale", width="stretch", channels="GRAY")
                 st.info("""
                 **📌 Penjelasan:** Grayscale menggabungkan 3 kanal RGB menjadi 1 kanal menggunakan rumus:
                 **Gray = 0,299R + 0,587G + 0,114B**
@@ -553,7 +557,7 @@ def main():
                 center = (w // 2, h // 2)
                 M = cv2.getRotationMatrix2D(center, angle, 1.0)
                 rotated = cv2.warpAffine(cv2_img_rgb, M, (w, h), borderMode=cv2.BORDER_REPLICATE)
-                st.image(rotated, caption=f"Rotasi {angle}°", use_column_width=True)
+                st.image(rotated, caption=f"Rotasi {angle}°", width="stretch")
                 show_result = True
                 result_img = rotated
                 st.info("""
@@ -570,7 +574,7 @@ def main():
                 flip_dir = st.radio("Arah Flip:", ["Horizontal", "Vertikal", "Horizontal & Vertikal"], horizontal=True, key="flip_dir")
                 flip_code = {"Horizontal": 1, "Vertikal": 0, "Horizontal & Vertikal": -1}[flip_dir]
                 flipped = cv2.flip(cv2_img_rgb, flip_code)
-                st.image(flipped, caption=f"Flip {flip_dir}", use_column_width=True)
+                st.image(flipped, caption=f"Flip {flip_dir}", width="stretch")
                 show_result = True
                 result_img = flipped
                 st.info("""
@@ -591,7 +595,7 @@ def main():
                 y2 = st.number_input("Y akhir", 0, h - 1, h // 2, key="crop_y2")
                 if x1 < x2 and y1 < y2:
                     cropped = cv2_img_rgb[y1:y2, x1:x2].copy()
-                    st.image(cropped, caption=f"Crop ({x1},{y1}) - ({x2},{y2})", use_column_width=True)
+                    st.image(cropped, caption=f"Crop ({x1},{y1}) - ({x2},{y2})", width="stretch")
                     show_result = True
                     result_img = cropped
                 else:
@@ -616,7 +620,7 @@ def main():
                     "INTER_LANCZOS4": cv2.INTER_LANCZOS4,
                 }
                 scaled = cv2.resize(cv2_img_rgb, (new_w, new_h), interpolation=interp_map[interp])
-                st.image(scaled, caption=f"Resize {scale_pct}% → {new_w}×{new_h}", use_column_width=True)
+                st.image(scaled, caption=f"Resize {scale_pct}% → {new_w}×{new_h}", width="stretch")
                 st.caption(f"Dimensi asli: {w}×{h} → Dimensi baru: {new_w}×{new_h}")
                 show_result = True
                 result_img = scaled
@@ -637,7 +641,7 @@ def main():
             if "Negasi" in selected_ops:
                 st.subheader("🎞️ Negasi (Invers Warna / Efek Film Negatif)")
                 negated = 255 - cv2_img_rgb
-                st.image(negated, caption="Negasi Citra", use_column_width=True)
+                st.image(negated, caption="Negasi Citra", width="stretch")
                 show_result = True
                 result_img = negated
                 st.info("""
@@ -655,7 +659,7 @@ def main():
             st.subheader("📸 Preview Hasil Operasi Terakhir")
             col_preview = st.columns([1, 2, 1])
             with col_preview[1]:
-                st.image(result_img, use_column_width=True)
+                st.image(result_img, width="stretch")
 
     # ========================================================
     # TAB 4: DETEKSI TEPI
@@ -689,8 +693,8 @@ def main():
                 sobel_res = apply_sobel(gray_img)
                 _, sobel_th = cv2.threshold(sobel_res, thresh_edge, 255, cv2.THRESH_BINARY)
                 edge_results["Sobel"] = (sobel_res, sobel_th)
-                st.image(sobel_res, caption="Sobel Gradient", use_column_width=True, channels="GRAY")
-                st.image(sobel_th, caption=f"Sobel Threshold {thresh_edge}", use_column_width=True, channels="GRAY")
+                st.image(sobel_res, caption="Sobel Gradient", width="stretch", channels="GRAY")
+                st.image(sobel_th, caption=f"Sobel Threshold {thresh_edge}", width="stretch", channels="GRAY")
                 st.info("""
                 **📌 Cara Kerja Sobel:**
                 - Kernel **3×3** dengan bobot tengah lebih besar (2) untuk mengurangi noise.
@@ -707,8 +711,8 @@ def main():
                 prewitt_res = apply_prewitt(gray_img)
                 _, prewitt_th = cv2.threshold(prewitt_res, thresh_edge, 255, cv2.THRESH_BINARY)
                 edge_results["Prewitt"] = (prewitt_res, prewitt_th)
-                st.image(prewitt_res, caption="Prewitt Gradient", use_column_width=True, channels="GRAY")
-                st.image(prewitt_th, caption=f"Prewitt Threshold {thresh_edge}", use_column_width=True, channels="GRAY")
+                st.image(prewitt_res, caption="Prewitt Gradient", width="stretch", channels="GRAY")
+                st.image(prewitt_th, caption=f"Prewitt Threshold {thresh_edge}", width="stretch", channels="GRAY")
                 st.info("""
                 **📌 Cara Kerja Prewitt:**
                 - Kernel **3×3** dengan bobot **sama rata** (semua 1), tanpa penekanan di tengah.
@@ -725,8 +729,8 @@ def main():
                 robert_res = apply_robert(gray_img)
                 _, robert_th = cv2.threshold(robert_res, thresh_edge, 255, cv2.THRESH_BINARY)
                 edge_results["Robert Cross"] = (robert_res, robert_th)
-                st.image(robert_res, caption="Robert Gradient", use_column_width=True, channels="GRAY")
-                st.image(robert_th, caption=f"Robert Threshold {thresh_edge}", use_column_width=True, channels="GRAY")
+                st.image(robert_res, caption="Robert Gradient", width="stretch", channels="GRAY")
+                st.image(robert_th, caption=f"Robert Threshold {thresh_edge}", width="stretch", channels="GRAY")
                 st.info("""
                 **📌 Cara Kerja Robert Cross:**
                 - Kernel **2×2** (paling kecil dari semua metode).
@@ -745,8 +749,8 @@ def main():
                 lap_res = apply_laplacian(gray_img)
                 _, lap_th = cv2.threshold(lap_res, thresh_edge, 255, cv2.THRESH_BINARY)
                 edge_results["Laplacian"] = (lap_res, lap_th)
-                st.image(lap_res, caption="Laplacian", use_column_width=True, channels="GRAY")
-                st.image(lap_th, caption=f"Laplacian Threshold {thresh_edge}", use_column_width=True, channels="GRAY")
+                st.image(lap_res, caption="Laplacian", width="stretch", channels="GRAY")
+                st.image(lap_th, caption=f"Laplacian Threshold {thresh_edge}", width="stretch", channels="GRAY")
                 st.info("""
                 **📌 Cara Kerja Laplacian:**
                 - Menggunakan **turunan kedua** (second derivative), berbeda dari 3 metode lain
@@ -783,7 +787,7 @@ def main():
                     st.caption(f"**{name}**")
                     res_img, th_img = edge_results[name]
                     combined = np.hstack([res_img, th_img])
-                    st.image(combined, caption=f"{name}: Gradient | Threshold", use_column_width=True, channels="GRAY")
+                    st.image(combined, caption=f"{name}: Gradient | Threshold", width="stretch", channels="GRAY")
 
     # ========================================================
     # TAB 5: SEGMENTASI & VOLUME — INTI APLIKASI
@@ -807,14 +811,14 @@ def main():
 
         with col_seg1:
             st.subheader("1️⃣ Otsu Thresholding — Segmentasi Otomatis")
-            st.image(gray_img, caption="Langkah 1: Citra Grayscale Input", use_column_width=True, channels="GRAY")
+            st.image(gray_img, caption="Langkah 1: Citra Grayscale Input", width="stretch", channels="GRAY")
 
             # Show Otsu threshold value
             _, otsu_test = cv2.threshold(gray_img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
             otsu_val = cv2.threshold(gray_img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[0]
             st.success(f"✅ Nilai threshold Otsu otomatis: **{otsu_val:.1f}**")
 
-            st.image(otsu_test, caption=f"Langkah 2: Otsu Threshold (T={otsu_val:.0f}) → Putih = Sampah, Hitam = Air", use_column_width=True, channels="GRAY")
+            st.image(otsu_test, caption=f"Langkah 2: Otsu Threshold (T={otsu_val:.0f}) → Putih = Sampah, Hitam = Air", width="stretch", channels="GRAY")
 
             st.info("""
             **📌 Penjelasan Otsu Thresholding:**
@@ -886,8 +890,8 @@ def main():
                 kernel_size=kernel_size, iterations=morph_iter
             )
 
-            st.image(binary_otsu, caption="Sebelum: Otsu Binary (masih ada noise & lubang)", use_column_width=True, channels="GRAY")
-            st.image(morph_result, caption=f"Sesudah: Otsu + {morph_op.capitalize()}", use_column_width=True, channels="GRAY")
+            st.image(binary_otsu, caption="Sebelum: Otsu Binary (masih ada noise & lubang)", width="stretch", channels="GRAY")
+            st.image(morph_result, caption=f"Sesudah: Otsu + {morph_op.capitalize()}", width="stretch", channels="GRAY")
 
             morph_explanations = {
                 "erosion": """
@@ -953,7 +957,7 @@ def main():
         col_over1, col_over2 = st.columns(2)
 
         with col_over1:
-            st.image(overlay_pil, caption="🖼️ Overlay: Area berwarna = sampah terdeteksi", use_column_width=True)
+            st.image(overlay_pil, caption="🖼️ Overlay: Area berwarna = sampah terdeteksi", width="stretch")
             st.caption("Alpha blending: `output = (1-α) × original + α × colored_mask`")
 
         with col_over2:
