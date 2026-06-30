@@ -24,6 +24,15 @@ st.set_page_config(
 def load_image(uploaded_file):
     bytes_data = uploaded_file.getvalue()
     pil_img = Image.open(BytesIO(bytes_data))
+
+    # Convert RGBA (PNG with alpha) or P (palette) to RGB
+    if pil_img.mode not in ("RGB", "L"):
+        pil_img = pil_img.convert("RGB")
+
+    # If grayscale, convert to RGB (3 identical channels)
+    if pil_img.mode == "L":
+        pil_img = pil_img.convert("RGB")
+
     opencv_img = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
     return pil_img, opencv_img
 
@@ -612,13 +621,22 @@ def main():
 
         if uploaded_file is not None:
             try:
+                # Check file size (max 50MB)
+                if uploaded_file.size > 50 * 1024 * 1024:
+                    st.error("Gambar terlalu besar! Maksimal 50MB.")
+                    if "img_loaded" in st.session_state:
+                        del st.session_state["img_loaded"]
+                    st.stop()
+
                 pil_img, cv2_img_bgr = load_image(uploaded_file)
                 cv2_img_rgb = cv2.cvtColor(cv2_img_bgr, cv2.COLOR_BGR2RGB)
                 gray_img = cv2.cvtColor(cv2_img_bgr, cv2.COLOR_BGR2GRAY)
 
-                st.success(f"✔ **{uploaded_file.name}**")
                 h, w = cv2_img_bgr.shape[:2]
-                st.info(f"**Dimensi:** {w} x {h} px\n**Format:** {uploaded_file.type}")
+                megapixels = (h * w) / 1_000_000
+
+                st.success(f"✔ **{uploaded_file.name}**")
+                st.info(f"**Format:** {uploaded_file.type}\n**Dimensi:** {w}×{h} px ({megapixels:.1f} MP)")
                 st.image(cv2_img_rgb, caption="Citra Asli", width="stretch")
 
                 st.session_state["pil_img"] = pil_img
